@@ -1,11 +1,13 @@
 using RoomHub.Api.Domain;
-using RoomHub.Api.Repositories;
+using RoomHub.Api.Domain.Repositories;
+using RoomHub.Api.Domain.UnitOfWork;
 
 namespace RoomHub.Api.Services;
 
 public class BookingService(
-    RoomRepository rooms,
-    BookingRepository bookings,
+    IRoomRepository rooms,
+    IBookingRepository bookings,
+    IUnitOfWork unitOfWork,
     TimeProvider timeProvider)
 {
     public Result<Booking> Create(
@@ -15,24 +17,27 @@ public class BookingService(
         DateTime endUtc,
         int attendees)
     {
-        var room = rooms.Get(roomId);
-        if (room is null)
-            return Result<Booking>.Failure(
-                new Error("RoomNotFound", "The room does not exist.", 404));
+        return unitOfWork.ExecuteInTransaction(() =>
+        {
+            var room = rooms.Get(roomId);
+            if (room is null)
+                return Result<Booking>.Failure(
+                    new Error("RoomNotFound", "The room does not exist.", 404));
 
-        var result = Booking.Create(
-            room,
-            bookedBy,
-            startUtc,
-            endUtc,
-            attendees,
-            timeProvider.GetUtcNow().UtcDateTime,
-            bookings.ListAll());
-        if (!result.IsSuccess)
+            var result = Booking.Create(
+                room,
+                bookedBy,
+                startUtc,
+                endUtc,
+                attendees,
+                timeProvider.GetUtcNow().UtcDateTime,
+                bookings.ListAll());
+            if (!result.IsSuccess)
+                return result;
+
+            bookings.Add(result.Value!);
             return result;
-
-        bookings.Add(result.Value!);
-        return result;
+        });
     }
 
     public Result<Booking> Get(Guid id)
@@ -47,11 +52,14 @@ public class BookingService(
 
     public Result Cancel(Guid id)
     {
-        var result = Get(id);
-        if (!result.IsSuccess)
-            return Result.Failure(result.Error!);
+        return unitOfWork.ExecuteInTransaction(() =>
+        {
+            var booking = bookings.Get(id);
+            if (booking is null)
+                return Result.Failure(
+                    new Error("BookingNotFound", "The booking does not exist.", 404));
 
-        var cancellation = result.Value!.Cancel(timeProvider.GetUtcNow().UtcDateTime);
-        return cancellation;
+            return booking.Cancel(timeProvider.GetUtcNow().UtcDateTime);
+        });
     }
 }

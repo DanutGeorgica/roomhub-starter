@@ -2,6 +2,11 @@ namespace RoomHub.Api.Domain;
 
 public sealed class Room
 {
+    private Room()
+    {
+        Name = string.Empty;
+    }
+
     private Room(Guid id, string name, int capacity)
     {
         Id = id;
@@ -9,11 +14,11 @@ public sealed class Room
         Capacity = capacity;
     }
 
-    public Guid Id { get; }
+    public Guid Id { get; private set; }
 
-    public string Name { get; }
+    public string Name { get; private set; }
 
-    public int Capacity { get; }
+    public int Capacity { get; private set; }
 
     public static Result<Room> Create(string? name, int capacity)
     {

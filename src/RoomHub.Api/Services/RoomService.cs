@@ -1,9 +1,10 @@
 using RoomHub.Api.Domain;
-using RoomHub.Api.Repositories;
+using RoomHub.Api.Domain.Repositories;
+using RoomHub.Api.Domain.UnitOfWork;
 
 namespace RoomHub.Api.Services;
 
-public class RoomService(RoomRepository rooms)
+public class RoomService(IRoomRepository rooms, IUnitOfWork unitOfWork)
 {
     public Result<Room> Create(string? name, int capacity)
     {
@@ -11,7 +12,11 @@ public class RoomService(RoomRepository rooms)
         if (!result.IsSuccess)
             return result;
 
-        rooms.Add(result.Value!);
+        unitOfWork.ExecuteInTransaction(() =>
+        {
+            rooms.Add(result.Value!);
+            return 0;
+        });
         return result;
     }
 

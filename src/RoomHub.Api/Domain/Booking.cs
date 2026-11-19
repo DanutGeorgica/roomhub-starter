@@ -8,6 +8,11 @@ public enum BookingStatus
 
 public sealed class Booking
 {
+    private Booking()
+    {
+        BookedBy = string.Empty;
+    }
+
     private Booking(
         Guid id,
         Guid roomId,
@@ -25,17 +30,17 @@ public sealed class Booking
         Status = BookingStatus.Active;
     }
 
-    public Guid Id { get; }
+    public Guid Id { get; private set; }
 
-    public Guid RoomId { get; }
+    public Guid RoomId { get; private set; }
 
-    public string BookedBy { get; }
+    public string BookedBy { get; private set; }
 
-    public DateTime StartUtc { get; }
+    public DateTime StartUtc { get; private set; }
 
-    public DateTime EndUtc { get; }
+    public DateTime EndUtc { get; private set; }
 
-    public int Attendees { get; }
+    public int Attendees { get; private set; }
 
     public BookingStatus Status { get; private set; }
 
