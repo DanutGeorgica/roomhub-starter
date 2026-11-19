@@ -55,6 +55,13 @@ When the room does not exist, 404 is returned before any validation.
 - **R8.** Cancelling moves a booking from `Active` to `Cancelled`. Cancelling an already
   cancelled booking gives 409. Cancelling a missing one gives 404. A cancelled booking frees its interval.
 
+  
+## Additional requirements:
+
+New requirement (R9). A participant cannot have more than 2 active bookings per day, across all rooms together. The “day” is the UTC date of startUtc. The third active booking on the same day, for the same bookedBy, is rejected with 409. Cancelled bookings do not count. Bookings on different days do not affect each other.
+The rule must live in the domain/handler, not in the endpoint. You may extend the repository with a new method.
+Reminders: commit often (at least 3 commits)
+
 ---
 
 ## Grading
