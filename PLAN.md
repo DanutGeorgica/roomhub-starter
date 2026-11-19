@@ -3,7 +3,7 @@
 ## Goal
 
 Transform the starter from layered, in-memory services into a vertical-slice application that
-keeps the existing HTTP contract unchanged and satisfies the business rules R1–R9.
+keeps the existing HTTP contract unchanged and satisfies the business rules R1–R11.
 
 The starter currently has:
 
@@ -15,6 +15,8 @@ The starter currently has:
 - No `TimeProvider`, four-hour duration check, correct active-booking interval logic, or
   already-cancelled conflict handling.
 - No participant daily booking-limit rule (R9).
+- No capacity-dependent two-hour duration rule (R10).
+- No cancellation cutoff rule (R11).
 
 ## Target structure
 
@@ -69,7 +71,8 @@ the required HTTP response.
 3. Replace expected business exceptions with returned errors:
    - validation: 400;
    - missing room or booking: 404;
-   - occupied room, repeated cancellation, or participant daily limit: 409.
+   - occupied room, repeated cancellation, participant daily limit, or cancellation cutoff:
+     409.
 4. Keep unexpected exceptions visible; do not convert all exceptions into success-shaped results.
 5. Make domain entities enforce invariants through constructors/factory methods and behavior
    methods rather than public setters.
@@ -97,6 +100,10 @@ Implement and verify the rules in domain behavior, not in endpoints:
 - R9: count active bookings for the same `bookedBy` across all rooms using the UTC date of
   `startUtc`; reject the third booking on that date with 409, ignore cancelled bookings, and
   keep bookings on other UTC dates independent.
+- R10: when room capacity is greater than 10, maximum duration is two hours and exactly two
+  hours is valid; rooms with capacity 10 or less retain the four-hour maximum.
+- R11: cancellation succeeds only when the booking starts at least 60 minutes from the current
+  `TimeProvider` time; otherwise return 409.
 
 Register a deterministic `TimeProvider` in production and make it replaceable for tests.
 Keep all stored and compared booking times in UTC.
@@ -142,8 +149,13 @@ Verify the exact contract with HTTP requests or focused automated tests:
 15. A cancelled booking does not count toward the participant's daily limit.
 16. Bookings on a different UTC start date do not count toward the limit.
 17. The daily-limit check is independent of room-overlap checking and still applies across rooms.
-18. Restart persistence works.
-19. `dotnet build` succeeds from a clean checkout.
+18. A room with capacity 10 or less accepts exactly four hours.
+19. A room with capacity greater than 10 accepts exactly two hours but rejects longer bookings
+    with 400.
+20. Cancellation at least 60 minutes before start succeeds.
+21. Cancellation less than 60 minutes before start returns 409.
+22. Restart persistence works.
+23. `dotnet build` succeeds from a clean checkout.
 
 Do not alter the documented routes or response shapes to make an internal design easier.
 
@@ -184,14 +196,15 @@ requested validation before continuing.
 
 ### Prompt 3 — Rich domain rules
 
-> Implement R1–R9 in rich domain classes rather than endpoints or application services. Entities
+> Implement R1–R11 in rich domain classes rather than endpoints or application services. Entities
 > must not expose public setters. Inject and use `TimeProvider`; never use `DateTime.UtcNow` or
 > `DateTime.Now`. Enforce the four-hour maximum, active-only half-open interval overlap,
 > touching intervals, repeated-cancellation conflict behavior, and R9's maximum of two active
 > bookings per participant per UTC start date across all rooms. Add focused tests or HTTP checks
 > for boundary cases, especially exactly four hours, touching bookings, two allowed daily
-> bookings, the rejected third booking, cancelled-booking exclusion, and a different UTC date.
-> Keep R9 out of the endpoint and preserve the documented API contract. Build afterward.
+> bookings, the rejected third booking, cancelled-booking exclusion, a different UTC date,
+> R10's capacity-dependent duration boundary, and R11's 60-minute cancellation boundary.
+> Keep R9–R11 out of the endpoint and preserve the documented API contract. Build afterward.
 
 ### Prompt 4 — EF Core and SQLite
 
@@ -201,7 +214,9 @@ requested validation before continuing.
 > code independent of EF-specific details where possible. Add a repository method for counting
 > active bookings for a participant on a UTC start date across all rooms. Make both R7 overlap
 > detection and R9 daily-limit detection plus insertion safe against concurrent requests in one
-> transaction. Do not commit database files. Build and perform a restart persistence check.
+> transaction. Ensure R10 and R11 use persisted booking/room data but keep their decisions in
+> the domain/handler flow. Do not commit database files. Build and perform a restart persistence
+> check.
 
 ### Prompt 5 — Contract verification
 
@@ -209,8 +224,9 @@ requested validation before continuing.
 > routes, JSON names, enum text, status codes, ProblemDetails responses, `Location` headers,
 > missing-room validation order, TimeProvider behavior, duration boundaries, active overlap,
 > touching intervals, cancellation, R9's cross-room daily limit and UTC-date boundary cases,
-> and restart persistence. Fix only issues introduced by the implementation, then run
-> `dotnet build` and report the evidence.
+> R10's capacity-dependent duration limits, R11's cancellation cutoff, and restart persistence.
+> Fix only issues introduced by the implementation, then run `dotnet build` and report the
+> evidence.
 
 ### Prompt 6 — Documentation and release review
 
@@ -228,9 +244,11 @@ requested validation before continuing.
 - [ ] Endpoints are thin and handlers implement the request flow.
 - [ ] Domain entities have no public setters.
 - [ ] Business errors use `Result/Error`, not business exceptions.
-- [ ] R1–R9 pass, including all boundary cases.
+- [ ] R1–R11 pass, including all boundary cases.
 - [ ] R9 counts active bookings across all rooms by `bookedBy` and UTC `startUtc` date.
 - [ ] R9 rejects the third booking with 409, ignores cancelled bookings, and does not mix dates.
+- [ ] R10 applies a four-hour limit at capacity 10 or less and a two-hour limit above 10.
+- [ ] R11 rejects cancellation inside the 60-minute window with 409 using `TimeProvider`.
 - [ ] `TimeProvider` is used and no `DateTime.UtcNow`/`DateTime.Now` remains.
 - [ ] EF Core + SQLite persists data across restart.
 - [ ] Repository and Unit of Work are represented by interfaces outside Infrastructure.

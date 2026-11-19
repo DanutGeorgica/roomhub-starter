@@ -62,6 +62,10 @@ New requirement (R9). A participant cannot have more than 2 active bookings per 
 The rule must live in the domain/handler, not in the endpoint. You may extend the repository with a new method.
 Reminders: commit often (at least 3 commits)
 
+R10. Rooms with a capacity greater than 10 can be booked for at most 2 hours (exactly 2 hours is allowed). A longer booking is rejected with 400. Rooms with capacity 10 or less keep the 4-hour limit from R6.
+ 
+R11. A booking can be cancelled only if it starts at least 60 minutes from now (current time from TimeProvider). Otherwise the cancel request is rejected with 409.
+
 ---
 
 ## Grading
