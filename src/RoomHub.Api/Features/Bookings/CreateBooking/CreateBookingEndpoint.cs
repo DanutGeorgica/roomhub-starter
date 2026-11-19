@@ -1,5 +1,6 @@
 using RoomHub.Api.Domain;
-using RoomHub.Api.Services;
+using RoomHub.Api.Domain.Repositories;
+using RoomHub.Api.Domain.UnitOfWork;
 using RoomHub.Api.Shared.CommandHandling;
 using RoomHub.Api.Shared.Http;
 
@@ -20,17 +21,43 @@ public sealed record CreateBookingCommand(
     DateTime EndUtc,
     int Attendees);
 
-public sealed class CreateBookingHandler(BookingService service)
+public sealed class CreateBookingHandler(
+    IRoomRepository rooms,
+    IBookingRepository bookings,
+    IUnitOfWork unitOfWork,
+    TimeProvider timeProvider)
     : ICommandHandler<CreateBookingCommand, Result<Booking>>
 {
     public Result<Booking> Handle(CreateBookingCommand command)
     {
-        return service.Create(
-            command.RoomId,
-            command.BookedBy,
-            command.StartUtc,
-            command.EndUtc,
-            command.Attendees);
+        return unitOfWork.ExecuteInTransaction(() =>
+        {
+            var room = rooms.Get(command.RoomId);
+            if (room is null)
+                return Result<Booking>.Failure(
+                    new Error("RoomNotFound", "The room does not exist.", 404));
+
+            var normalizedBookedBy = command.BookedBy?.Trim();
+            var activeBookingsOnDay = string.IsNullOrWhiteSpace(normalizedBookedBy)
+                ? 0
+                : bookings.CountActiveForParticipantOnDate(
+                    normalizedBookedBy,
+                    command.StartUtc);
+            var result = Booking.Create(
+                room,
+                command.BookedBy,
+                command.StartUtc,
+                command.EndUtc,
+                command.Attendees,
+                timeProvider.GetUtcNow().UtcDateTime,
+                bookings.ListActiveForRoom(command.RoomId),
+                activeBookingsOnDay);
+            if (!result.IsSuccess)
+                return result;
+
+            bookings.Add(result.Value!);
+            return result;
+        });
     }
 }
 

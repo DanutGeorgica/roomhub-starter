@@ -248,20 +248,20 @@ requested validation before continuing.
 
 ## Completion checklist
 
-- [ ] `dotnet build` succeeds.
-- [ ] At least five feature slices exist under `Features/`.
-- [ ] Endpoints are thin and handlers implement the request flow.
-- [ ] Domain entities have no public setters.
-- [ ] Business errors use `Result/Error`, not business exceptions.
-- [ ] R1–R11 pass, including all boundary cases.
-- [ ] R9 counts active bookings across all rooms by `bookedBy` and UTC `startUtc` date.
-- [ ] R9 rejects the third booking with 409, ignores cancelled bookings, and does not mix dates.
-- [ ] R10 applies a four-hour limit at capacity 10 or less and a two-hour limit above 10.
-- [ ] R11 rejects cancellation inside the 60-minute window with 409 using `TimeProvider`.
-- [ ] `TimeProvider` is used and no `DateTime.UtcNow`/`DateTime.Now` remains.
-- [ ] EF Core + SQLite persists data across restart.
-- [ ] Repository and Unit of Work are represented by interfaces outside Infrastructure.
-- [ ] API contract and ProblemDetails status codes are unchanged.
-- [ ] `DECISIONS.md`, `BUGS.md`, and `AI-LOG.md` are complete and truthful.
-- [ ] At least three commits exist.
-- [ ] The repository is public and the link is ready before the quiz.
+- [x] `dotnet build` succeeds.
+- [x] At least five feature slices exist under `Features/`.
+- [x] Endpoints are thin and handlers implement the request flow.
+- [x] Domain entities have no public setters.
+- [x] Business errors use `Result/Error`, not business exceptions.
+- [x] R1–R11 pass, including all boundary cases.
+- [x] R9 counts active bookings across all rooms by `bookedBy` and UTC `startUtc` date.
+- [x] R9 rejects the third booking with 409, ignores cancelled bookings, and does not mix dates.
+- [x] R10 applies a four-hour limit at capacity 10 or less and a two-hour limit above 10.
+- [x] R11 rejects cancellation inside the 60-minute window with 409 using `TimeProvider`.
+- [x] `TimeProvider` is used and no `DateTime.UtcNow`/`DateTime.Now` remains.
+- [x] EF Core + SQLite persists data across restart.
+- [x] Repository and Unit of Work are represented by interfaces outside Infrastructure.
+- [x] API contract and ProblemDetails status codes are unchanged.
+- [ ] `DECISIONS.md`, `BUGS.md`, and `AI-LOG.md` remain to be completed manually.
+- [ ] At least three commits exist (not verified in this environment).
+- [ ] The repository is public and the link is ready before the quiz (not verified in this environment).

@@ -1,5 +1,5 @@
 using RoomHub.Api.Domain;
-using RoomHub.Api.Services;
+using RoomHub.Api.Domain.Repositories;
 using RoomHub.Api.Shared.CommandHandling;
 using RoomHub.Api.Shared.Http;
 
@@ -9,12 +9,16 @@ public sealed record GetRoomResponse(Guid Id, string Name, int Capacity);
 
 public sealed record GetRoomQuery(Guid Id);
 
-public sealed class GetRoomHandler(RoomService service)
+public sealed class GetRoomHandler(IRoomRepository rooms)
     : ICommandHandler<GetRoomQuery, Result<Room>>
 {
     public Result<Room> Handle(GetRoomQuery query)
     {
-        return service.Get(query.Id);
+        var room = rooms.Get(query.Id);
+        return room is null
+            ? Result<Room>.Failure(
+                new Error("RoomNotFound", "The room does not exist.", 404))
+            : Result<Room>.Success(room);
     }
 }
 

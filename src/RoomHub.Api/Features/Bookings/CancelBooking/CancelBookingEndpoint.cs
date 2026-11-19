@@ -1,5 +1,6 @@
 using RoomHub.Api.Domain;
-using RoomHub.Api.Services;
+using RoomHub.Api.Domain.Repositories;
+using RoomHub.Api.Domain.UnitOfWork;
 using RoomHub.Api.Shared.CommandHandling;
 using RoomHub.Api.Shared.Http;
 
@@ -7,12 +8,23 @@ namespace RoomHub.Api.Features.Bookings.CancelBooking;
 
 public sealed record CancelBookingCommand(Guid Id);
 
-public sealed class CancelBookingHandler(BookingService service)
+public sealed class CancelBookingHandler(
+    IBookingRepository bookings,
+    IUnitOfWork unitOfWork,
+    TimeProvider timeProvider)
     : ICommandHandler<CancelBookingCommand, Result>
 {
     public Result Handle(CancelBookingCommand command)
     {
-        return service.Cancel(command.Id);
+        return unitOfWork.ExecuteInTransaction(() =>
+        {
+            var booking = bookings.Get(command.Id);
+            if (booking is null)
+                return Result.Failure(
+                    new Error("BookingNotFound", "The booking does not exist.", 404));
+
+            return booking.Cancel(timeProvider.GetUtcNow().UtcDateTime);
+        });
     }
 }
 

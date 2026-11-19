@@ -7,19 +7,15 @@ using Microsoft.EntityFrameworkCore;
 using RoomHub.Api.Domain.Repositories;
 using RoomHub.Api.Domain.UnitOfWork;
 using RoomHub.Api.Infrastructure.Persistence;
-using RoomHub.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Starter organized in layers: Endpoints -> Services -> Repositories -> Models.
 builder.Services.AddDbContext<RoomHubDbContext>(options =>
     options.UseSqlite("Data Source=roomhub.db"));
 builder.Services.AddScoped<IRoomRepository, EfRoomRepository>();
 builder.Services.AddScoped<IBookingRepository, EfBookingRepository>();
 builder.Services.AddScoped<IUnitOfWork, EfUnitOfWork>();
 builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
-builder.Services.AddScoped<RoomService>();
-builder.Services.AddScoped<BookingService>();
 builder.Services.AddScoped<CreateRoomHandler>();
 builder.Services.AddScoped<GetRoomHandler>();
 builder.Services.AddScoped<CreateBookingHandler>();

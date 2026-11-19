@@ -51,7 +51,8 @@ public sealed class Booking
         DateTime endUtc,
         int attendees,
         DateTime nowUtc,
-        IEnumerable<Booking> existingBookings)
+        IEnumerable<Booking> existingBookings,
+        int activeBookingsOnDay)
     {
         if (string.IsNullOrWhiteSpace(bookedBy))
             return Result<Booking>.Failure(
@@ -99,10 +100,6 @@ public sealed class Booking
                 new Error("RoomOccupied", "The room is occupied in this interval.", 409));
         }
 
-        var activeBookingsOnDay = bookings.Count(existing =>
-            existing.Status == BookingStatus.Active &&
-            string.Equals(existing.BookedBy, normalizedBookedBy, StringComparison.Ordinal) &&
-            existing.StartUtc.Date == startUtc.Date);
         if (activeBookingsOnDay >= 2)
         {
             return Result<Booking>.Failure(

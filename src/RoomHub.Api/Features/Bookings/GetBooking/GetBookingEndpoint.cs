@@ -1,5 +1,5 @@
 using RoomHub.Api.Domain;
-using RoomHub.Api.Services;
+using RoomHub.Api.Domain.Repositories;
 using RoomHub.Api.Shared.CommandHandling;
 using RoomHub.Api.Shared.Http;
 
@@ -16,12 +16,16 @@ public sealed record GetBookingResponse(
 
 public sealed record GetBookingQuery(Guid Id);
 
-public sealed class GetBookingHandler(BookingService service)
+public sealed class GetBookingHandler(IBookingRepository bookings)
     : ICommandHandler<GetBookingQuery, Result<Booking>>
 {
     public Result<Booking> Handle(GetBookingQuery query)
     {
-        return service.Get(query.Id);
+        var booking = bookings.Get(query.Id);
+        return booking is null
+            ? Result<Booking>.Failure(
+                new Error("BookingNotFound", "The booking does not exist.", 404))
+            : Result<Booking>.Success(booking);
     }
 }
 

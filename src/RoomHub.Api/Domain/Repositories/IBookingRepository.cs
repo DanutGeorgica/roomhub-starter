@@ -6,5 +6,7 @@ public interface IBookingRepository
 
     Booking? Get(Guid id);
 
-    IReadOnlyList<Booking> ListAll();
+    IReadOnlyList<Booking> ListActiveForRoom(Guid roomId);
+
+    int CountActiveForParticipantOnDate(string bookedBy, DateTime dateUtc);
 }
