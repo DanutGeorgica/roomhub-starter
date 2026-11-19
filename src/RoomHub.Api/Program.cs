@@ -11,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Starter organized in layers: Endpoints -> Services -> Repositories -> Models.
 builder.Services.AddSingleton<RoomRepository>();
 builder.Services.AddSingleton<BookingRepository>();
+builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
 builder.Services.AddScoped<RoomService>();
 builder.Services.AddScoped<BookingService>();
 builder.Services.AddScoped<CreateRoomHandler>();

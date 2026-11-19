@@ -44,8 +44,12 @@ src/RoomHub.Api/
 ```
 
 The exact names may follow the project's conventions, but each operation should have a clear
-feature folder. Endpoints should only bind requests, invoke a handler, and translate a result to
-the required HTTP response.
+feature folder. Each feature should own its request/response contracts, command/query, handler,
+and endpoint. Endpoints should only bind requests, invoke a handler, and translate a result to
+the required HTTP response. The final structure should not leave business operations in the
+top-level `Endpoints`, `Services`, or `Models` folders; persistence implementations belong under
+`Infrastructure`, while domain entities and repository/unit-of-work abstractions remain outside
+that layer.
 
 ## Delivery order
 
@@ -63,6 +67,8 @@ the required HTTP response.
 4. Remove or stop registering the old endpoint/service path only after the new routes compile.
 5. Run `dotnet build`.
 6. Make the first meaningful commit after the baseline compiles.
+7. Treat the old top-level endpoint files as transitional only; retire them after the feature
+   mappings are active.
 
 ### Phase 2 — Introduce the domain and Result/Error flow
 
@@ -76,11 +82,13 @@ the required HTTP response.
 4. Keep unexpected exceptions visible; do not convert all exceptions into success-shaped results.
 5. Make domain entities enforce invariants through constructors/factory methods and behavior
    methods rather than public setters.
-6. Ensure the booking creation flow checks that the room exists before validating the booking
+6. Move room and booking entities into the domain layer and leave services/handlers responsible
+   only for orchestration and dependency access.
+7. Ensure the booking creation flow checks that the room exists before validating the booking
    request, as required by the contract.
-7. Run focused build and HTTP checks for room creation, room lookup, booking creation, missing
+8. Run focused build and HTTP checks for room creation, room lookup, booking creation, missing
    resources, and error status codes.
-8. Make the second meaningful commit.
+9. Make the second meaningful commit.
 
 ### Phase 3 — Implement every business rule in the domain
 
@@ -105,8 +113,9 @@ Implement and verify the rules in domain behavior, not in endpoints:
 - R11: cancellation succeeds only when the booking starts at least 60 minutes from the current
   `TimeProvider` time; otherwise return 409.
 
-Register a deterministic `TimeProvider` in production and make it replaceable for tests.
-Keep all stored and compared booking times in UTC.
+Register `TimeProvider.System` in production and make it replaceable for tests. Pass the current
+UTC value into domain behavior so the domain does not call wall-clock APIs directly. Keep all
+stored and compared booking times in UTC.
 
 ### Phase 4 — Add EF Core, SQLite, repository interfaces, and Unit of Work
 

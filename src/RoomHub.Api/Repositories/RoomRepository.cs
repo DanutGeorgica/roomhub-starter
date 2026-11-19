@@ -1,4 +1,4 @@
-using RoomHub.Api.Models;
+using RoomHub.Api.Domain;
 
 namespace RoomHub.Api.Repositories;
 

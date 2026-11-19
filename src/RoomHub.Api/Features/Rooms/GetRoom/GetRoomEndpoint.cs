@@ -1,5 +1,4 @@
 using RoomHub.Api.Domain;
-using RoomHub.Api.Models;
 using RoomHub.Api.Services;
 using RoomHub.Api.Shared.CommandHandling;
 using RoomHub.Api.Shared.Http;

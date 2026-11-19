@@ -60,7 +60,6 @@ When the room does not exist, 404 is returned before any validation.
 
 New requirement (R9). A participant cannot have more than 2 active bookings per day, across all rooms together. The “day” is the UTC date of startUtc. The third active booking on the same day, for the same bookedBy, is rejected with 409. Cancelled bookings do not count. Bookings on different days do not affect each other.
 The rule must live in the domain/handler, not in the endpoint. You may extend the repository with a new method.
-Reminders: commit often (at least 3 commits)
 
 R10. Rooms with a capacity greater than 10 can be booked for at most 2 hours (exactly 2 hours is allowed). A longer booking is rejected with 400. Rooms with capacity 10 or less keep the 4-hour limit from R6.
  

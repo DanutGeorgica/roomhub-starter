@@ -12,9 +12,9 @@ public sealed record CreateRoomResponse(Guid Id, string Name, int Capacity);
 public sealed record CreateRoomCommand(string? Name, int Capacity);
 
 public sealed class CreateRoomHandler(RoomService service)
-    : ICommandHandler<CreateRoomCommand, Result<RoomHub.Api.Models.Room>>
+    : ICommandHandler<CreateRoomCommand, Result<Room>>
 {
-    public Result<RoomHub.Api.Models.Room> Handle(CreateRoomCommand command)
+    public Result<Room> Handle(CreateRoomCommand command)
     {
         return service.Create(command.Name, command.Capacity);
     }

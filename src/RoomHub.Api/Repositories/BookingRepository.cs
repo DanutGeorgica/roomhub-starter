@@ -1,4 +1,4 @@
-using RoomHub.Api.Models;
+using RoomHub.Api.Domain;
 
 namespace RoomHub.Api.Repositories;
 
@@ -29,6 +29,14 @@ public class BookingRepository
         lock (_lock)
         {
             return _bookings.Where(b => b.RoomId == roomId).ToList();
+        }
+    }
+
+    public List<Booking> ListAll()
+    {
+        lock (_lock)
+        {
+            return _bookings.ToList();
         }
     }
 }
